@@ -13,8 +13,8 @@ app.get('/download', async (req, res) => {
     }
 
     // Get information about the video (including title)
-    const info = await ytdl.getInfo(videoURL);
-    const title = info.videoDetails.title; // Get the video's title
+    //const info = await ytdl.getInfo(videoURL);
+    //const title = info.videoDetails.title; // Get the video's title
 
     // Set response headers to specify a downloadable file with the video's title
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
