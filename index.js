@@ -5,29 +5,26 @@ const app = express();
 const port = 3000;
 
 app.get('/download', async (req, res) => {
-  try {
-    const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
-    const title = req.query.title || 'audio'; // Get the title query parameter or use 'audio' as default
+  const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
+  const videoInfo = await ytdl.getInfo(videoURL);
 
-    if (!videoURL) {
-      return res.status(400).send('Missing video URL');
-    }
+  // Get the title of the video
+  const videoTitle = videoInfo.videoDetails.title;
+  const fileName = `${videoTitle}.mp3`;
 
-    // Get information about the video (including file size)
-    const info = await ytdl.getInfo(videoURL);
-    const fileSize = info.formats[0].contentLength; // Get the file size in bytes
+  // Set headers for the MP3 file download
+  res.setHeader('Content-disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('Content-type', 'audio/mpeg');
 
-    // Set response headers to specify a downloadable file with the specified title
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
-    res.setHeader('Content-Type', 'audio/mpeg');
-   // res.setHeader('Content-Length', fileSize); // Set the Content-Length header
-
-    // Pipe the video stream into the response
-    ytdl(videoURL, { filter: 'audioonly' }).pipe(res);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
-  }
+  // Convert the video to MP3 and pipe it to the response
+  ytdl(videoURL, { quality: 'highestaudio' })
+    .pipe(res)
+    .on('finish', () => {
+      console.log(`Downloaded ${videoTitle} as ${fileName}`);
+    })
+    .on('error', (err) => {
+      console.error('Error:', err);
+    });
 });
 
 app.listen(port, () => {
