@@ -2,7 +2,7 @@ const express = require('express');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 const app = express();
-const port = 8080;
+const port = 3000;
 
 app.get('/download', async (req, res) => {
   try {
@@ -13,8 +13,8 @@ app.get('/download', async (req, res) => {
     }
 
     // Get information about the video (including title)
-    //const info = await ytdl.getInfo(videoURL);
-    //const title = info.videoDetails.title; // Get the video's title
+    const info = await ytdl.getInfo(videoURL);
+    const title = info.videoDetails.title; // Get the video's title
 
     // Set response headers to specify a downloadable file with the video's title
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
@@ -24,7 +24,7 @@ app.get('/download', async (req, res) => {
     ytdl(videoURL, { quality: 'highestaudio' }).pipe(res);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
+    //res.status(500).send('Internal Server Error');
   }
 });
 
