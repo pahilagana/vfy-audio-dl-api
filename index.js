@@ -17,7 +17,7 @@ app.get('/download', async (req, res) => {
     const title = info.videoDetails.title; // Get the video's title
 
     // Set response headers to specify a downloadable file with the video's title
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+    // res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
     // Pipe the audio stream into the response
