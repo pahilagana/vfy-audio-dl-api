@@ -7,20 +7,18 @@ const port = 3000;
 app.get('/download', async (req, res) => {
   try {
     const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
-
     if (!videoURL) {
       return res.status(400).send('Missing video URL');
     }
 
-    // Get information about the video (including title and file size)
+    // Get information about the video (including file size)
     const info = await ytdl.getInfo(videoURL);
-    const title = info.videoDetails.title; // Get the video title
-    // const fileSize = info.formats[0].contentLength; // Get the file size in bytes
+    const fileSize = info.formats[0].contentLength; // Get the file size in bytes
 
-    // Set response headers to specify a downloadable file with the video title
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+    // Set response headers to specify a downloadable file
+    res.setHeader('Content-Disposition', 'attachment; filename="audio.mp3"');
     res.setHeader('Content-Type', 'audio/mpeg');
-    // res.setHeader('Content-Length', fileSize); // Set the Content-Length header
+    res.setHeader('Content-Length', fileSize); // Set the Content-Length header
 
     // Pipe the video stream into the response
     ytdl(videoURL, { filter: 'audioonly' }).pipe(res);
