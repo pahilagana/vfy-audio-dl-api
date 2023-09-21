@@ -15,7 +15,7 @@ app.get('/download', async (req, res) => {
     // Get information about the video (including title and file size)
     const info = await ytdl.getInfo(videoURL);
     const title = info.videoDetails.title; // Get the video title
-    const fileSize = info.formats[0].contentLength; // Get the file size in bytes
+    // const fileSize = info.formats[0].contentLength; // Get the file size in bytes
 
     // Set response headers to specify a downloadable file with the video title
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
