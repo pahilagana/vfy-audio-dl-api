@@ -3,7 +3,6 @@ const ytdl = require('ytdl-core');
 const axios = require('axios');
 const app = express();
 const port = 3000;
-const NodeID3 = require('node-id3');
 
 app.get('/download', async (req, res) => {
   try {
@@ -20,33 +19,17 @@ app.get('/download', async (req, res) => {
       return res.status(500).send('Failed to fetch video information');
     }
 
-    const { title, channelName, singerName, thumbnailUrl } = videoInfo;
+    const { title, channelName, thumbnailUrl } = videoInfo;
 
     // Set response headers to specify a downloadable audio file with the auto-generated title
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
-    // Set the image as metadata in the audio file
-    const imageBuffer = await fetchImage(thumbnailUrl); // Fetch the video thumbnail as an image
-    const audioStream = ytdl(videoURL, { quality: 'highestaudio' });
-    audioStream.on('response', () => {
-      NodeID3.write(
-        {
-          title: title,
-          artist: singerName,
-          album: channelName,
-          image: {
-            mime: 'image/jpeg',
-            type: { id: 3, name: 'front cover' },
-            description: 'Cover Picture',
-            imageBuffer: imageBuffer,
-          },
-        },
-        audioStream,
-      );
-    });
-
-    audioStream.pipe(res);
+    // Fetch the video thumbnail as an image and pipe it to the response
+    const imageBuffer = await fetchImage(thumbnailUrl);
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.end(imageBuffer);
 
   } catch (error) {
     console.error('Error:', error);
@@ -66,7 +49,6 @@ async function getVideoInfo(videoURL) {
     return {
       title: videoData.title,
       channelName: videoData.channelTitle,
-      singerName: 'Your Singer Name', // Replace with the actual singer name
       thumbnailUrl: videoData.thumbnails.high.url,
     };
   } catch (error) {
@@ -84,3 +66,4 @@ async function fetchImage(url) {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
