@@ -2,9 +2,8 @@ const express = require('express');
 const ytdl = require('ytdl-core');
 const app = express();
 const port = 3000;
-const ffmpeg = require('fluent-ffmpeg');
 
-app.get('/poster', async (req, res) => {
+app.get('/download', async (req, res) => {
   try {
     const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
 
@@ -12,31 +11,22 @@ app.get('/poster', async (req, res) => {
       return res.status(400).send('Missing video URL');
     }
 
-    // Capture a snapshot of the video at a specific time (e.g., 10 seconds into the video)
-    const snapshotTime = 10; // You can adjust this time as needed
-    const snapshotFilename = 'snapshot.jpg';
+    // Get information about the video (including the title and size)
+    const info = await ytdl.getInfo(videoURL);
+    const videoTitle = info.videoDetails.title;
+    const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
+    const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
+    const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    const fileSize = audioFormats[0].contentLength || 'unknown'; // Get the audio size in bytes
 
-    ffmpeg()
-      .input(videoURL)
-      .seekInput(snapshotTime)
-      .frames(1)
-      .output(snapshotFilename)
-      .on('end', () => {
-        // Set the content type for the response
-        res.setHeader('Content-Type', 'image/jpeg');
+    // Set response headers to specify a downloadable audio file with the auto-generated title and size
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}vivek💞masona.mp3"`);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', fileSize);
 
-        // Pipe the snapshot image into the response
-        const imageStream = fs.createReadStream(snapshotFilename);
-        imageStream.pipe(res);
+    // Pipe the audio stream into the response
+    ytdl(videoURL, { format: audioFormats[0] }).pipe(res);
 
-        // Delete the snapshot file after it's served
-        fs.unlink(snapshotFilename, (err) => {
-          if (err) {
-            console.error('Error deleting snapshot file:', err);
-          }
-        });
-      })
-      .run();
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Internal Server Error');
