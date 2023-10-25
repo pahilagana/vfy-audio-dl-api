@@ -4,6 +4,9 @@ const axios = require('axios');
 const app = express();
 const port = 3000;
 
+// Specify the URL of the image you want to use as the song poster
+const CUSTOM_POSTER_URL = 'https://vivek.com/api.jpg';
+
 app.get('/download', async (req, res) => {
   try {
     const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
@@ -19,17 +22,17 @@ app.get('/download', async (req, res) => {
       return res.status(500).send('Failed to fetch video information');
     }
 
-    const { title, channelName, thumbnailUrl } = videoInfo;
+    const { title } = videoInfo;
 
     // Set response headers to specify a downloadable audio file with the auto-generated title
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
 
-    // Fetch the video thumbnail as an image and pipe it to the response
-    const imageBuffer = await fetchImage(thumbnailUrl);
+    // Fetch the custom poster image and serve it as the song poster
+    const posterImageBuffer = await fetchImage(CUSTOM_POSTER_URL);
     res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.end(imageBuffer);
+    res.setHeader('Content-Length', posterImageBuffer.length);
+    res.end(posterImageBuffer);
 
   } catch (error) {
     console.error('Error:', error);
@@ -48,8 +51,6 @@ async function getVideoInfo(videoURL) {
 
     return {
       title: videoData.title,
-      channelName: videoData.channelTitle,
-      thumbnailUrl: videoData.thumbnails.high.url,
     };
   } catch (error) {
     console.error('Failed to fetch video details:', error);
