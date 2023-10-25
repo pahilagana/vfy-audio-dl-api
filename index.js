@@ -2,37 +2,38 @@ const express = require('express');
 const ytdl = require('ytdl-core');
 const app = express();
 const port = 3000;
+const nodeID3 = require('node-id3'); // Import the node-id3 library
 
 app.get('/download', async (req, res) => {
   try {
-    const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
+    const videoURL = req.query.url;
 
     if (!videoURL) {
       return res.status(400).send('Missing video URL');
     }
 
-    // Get information about the video (including the title, channel name, and singer name)
     const info = await ytdl.getInfo(videoURL);
     const videoTitle = info.videoDetails.title;
-    const channelName = info.videoDetails.author.name; // Get the channel name
-    const singerName = info.videoDetails.media.artist; // Get the singer name
-    const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
-    const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
+    const autoTitle = videoTitle.replace(/[^\w\s]/gi, '');
+    const sanitizedTitle = autoTitle || 'audio';
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-    const fileSize = audioFormats[0].contentLength || 'unknown'; // Get the audio size in bytes
+    const fileSize = audioFormats[0].contentLength || 'unknown';
 
-    // Set response headers to specify a downloadable audio file with the auto-generated title and size
     res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', fileSize);
-    
-    // Include channel and singer names in response headers
-    res.setHeader('X-Channel-Name', channelName);
-    res.setHeader('X-Singer-Name', singerName);
 
     // Pipe the audio stream into the response
     ytdl(videoURL, { format: audioFormats[0] }).pipe(res);
 
+    // Set the artist name in the metadata tags
+    const tags = {
+      title: sanitizedTitle,
+      artist: 'vivekfy', // Set the artist name here
+    };
+
+    const writeStream = nodeID3.write(tags, res);
+    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Internal Server Error');
