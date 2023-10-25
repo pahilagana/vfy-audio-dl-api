@@ -1,7 +1,5 @@
-
 const express = require('express');
 const ytdl = require('ytdl-core');
-const fs = require('fs');
 const app = express();
 const port = 3000;
 
@@ -18,15 +16,16 @@ app.get('/download', async (req, res) => {
     const videoTitle = info.videoDetails.title;
     const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
     const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
-    const fileSize = info.formats[0].contentLength || 'unknown'; // Get the video size in bytes
+    const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    const fileSize = audioFormats[0].contentLength || 'unknown'; // Get the audio size in bytes
 
-    // Set response headers to specify a downloadable file with the auto-generated title and size
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp4"`);
-    res.setHeader('Content-Type', 'video/mp4');
+    // Set response headers to specify a downloadable audio file with the auto-generated title and size
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
+    res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', fileSize);
 
-    // Pipe the video stream into the response
-    ytdl(videoURL, { quality: 'highestvideo' }).pipe(res);
+    // Pipe the audio stream into the response
+    ytdl(videoURL, { format: audioFormats[0] }).pipe(res);
 
   } catch (error) {
     console.error('Error:', error);
