@@ -20,7 +20,7 @@ app.get('/download', async (req, res) => {
     const fileSize = audioFormats[0].contentLength || 'unknown'; // Get the audio size in bytes
 
     // Set response headers to specify a downloadable audio file with the auto-generated title and size
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}vivek masona.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}(vivek masona).mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', fileSize);
 
