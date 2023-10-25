@@ -1,4 +1,3 @@
-
 const express = require('express');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
@@ -13,23 +12,21 @@ app.get('/download', async (req, res) => {
       return res.status(400).send('Missing video URL');
     }
 
-    // Get information about the video (including the title)
+    // Get information about the video (including the title and size)
     const info = await ytdl.getInfo(videoURL);
     const videoTitle = info.videoDetails.title;
     const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
     const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
+    const fileSize = info.formats[0].contentLength || 'unknown'; // Get the video size in bytes
 
-    // Set response headers to specify a downloadable file with the auto-generated title
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
-    res.setHeader('Content-Type', 'audio/mpeg');
+    // Set response headers to specify a downloadable file with the auto-generated title and size
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp4"`);
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Length', fileSize);
 
-    // Get the content length of the audio stream
-    const audioStream = ytdl(videoURL, { filter: 'audioonly' });
-    const contentLength = audioStream.getResponseHeaders()['content-length'];
-    res.setHeader('Content-Length', contentLength);
+    // Pipe the video stream into the response
+    ytdl(videoURL, { quality: 'highestvideo' }).pipe(res);
 
-    // Pipe the audio stream into the response
-    audioStream.pipe(res);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Internal Server Error');
@@ -39,3 +36,4 @@ app.get('/download', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
