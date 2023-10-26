@@ -1,78 +1,40 @@
 const express = require('express');
 const ytdl = require('ytdl-core');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-app.use(express.json());
-
-// Route for downloading audio
-app.get('/download/audio', async (req, res) => {
+app.get('/download', async (req, res) => {
   try {
-    const videoURL = req.query.url;
+    const videoURL = req.query.url; // Get the YouTube video URL from the query parameter
 
     if (!videoURL) {
-      return res.status(400).json({ error: 'Missing video URL' });
+      return res.status(400).send('Missing video URL');
     }
 
+    // Get information about the video (including the title and size)
     const info = await ytdl.getInfo(videoURL);
     const videoTitle = info.videoDetails.title;
-    const sanitizedTitle = videoTitle.replace(/[^\w\s]/gi, '') || 'audio';
+    const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
+    const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+    const fileSize = audioFormats[0].contentLength || 'unknown'; // Get the audio size in bytes
 
-    if (!audioFormats.length) {
-      return res.status(404).json({ error: 'No suitable audio format found' });
-    }
-
-    const format = audioFormats[0];
-    const contentLength = format.contentLength;
-
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp3"`);
+    // Set response headers to specify a downloadable audio file with the auto-generated title and size
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}vivekfy.mp3"`);
     res.setHeader('Content-Type', 'audio/mpeg');
-    if (contentLength) {
-      res.setHeader('Content-Length', contentLength);
-    }
+    res.setHeader('Content-Length', fileSize);
 
-    ytdl(videoURL, { format }).pipe(res);
+    // Pipe the audio stream into the response
+    ytdl(videoURL, { format: audioFormats[0] }).pipe(res);
+
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// Route for downloading video
-app.get('/download/video', async (req, res) => {
-  try {
-    const videoURL = req.query.url;
-
-    if (!videoURL) {
-      return res.status(400).json({ error: 'Missing video URL' });
-    }
-
-    const info = await ytdl.getInfo(videoURL);
-    const videoTitle = info.videoDetails.title;
-    const sanitizedTitle = videoTitle.replace(/[^\w\s]/gi, '') || 'video';
-    const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
-
-    if (!format) {
-      return res.status(404).json({ error: 'No suitable video format found' });
-    }
-
-    const contentLength = format.contentLength;
-
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.mp4"`);
-    res.setHeader('Content-Type', 'video/mp4');
-    if (contentLength) {
-      res.setHeader('Content-Length', contentLength);
-    }
-
-    ytdl(videoURL, { format }).pipe(res);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).send('Internal Server Error');
   }
 });
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
 
