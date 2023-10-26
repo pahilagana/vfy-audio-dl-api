@@ -15,7 +15,7 @@ app.get('/download/audio', async (req, res) => {
     // Get information about the video
     const info = await ytdl.getInfo(videoURL);
     const videoTitle = info.videoDetails.title;
-    //const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
+    const autoTitle = videoTitle.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
     const sanitizedTitle = autoTitle || 'audio'; // Use the sanitized title or 'audio' as a default
     const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
 
